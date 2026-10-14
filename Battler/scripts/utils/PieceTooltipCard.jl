@@ -84,6 +84,7 @@ module PieceTooltipCardModule
         label == "BURN"           && return "Apply $value Burn"
         label == "FREEZE"         && return "Apply $value Freeze"
         label == "VULN"           && return "Apply $value Vulnerable"
+        label == "VULN (all)"     && return "Apply $value Vulnerable to all enemies"
         label == "POISON"         && return "Apply $value Poison"
         label == "SHOCK"          && return "Apply $value Shock"
         label == "DODGE %"        && return "$value% Dodge chance"

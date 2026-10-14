@@ -97,18 +97,20 @@ function _apply_general_effects(piece::Piece, battle_manager, actionValue::Ref{I
     end
     if piece.vulnerable > 0
         vulnerable_amount = piece.vulnerable * actionValue[]
-        if status_target !== nothing
-            status_target.vulnerable = clamp(status_target.vulnerable + vulnerable_amount, 0, 5)
-
-            # Emit vulnerable status event
-            for enemy in battle_manager.enemies
-                if enemy.scripts[1] == status_target || is_aoe(piece)
-                    Globals.ObserverModule.notify(:status_applied, Dict(:target => enemy, :status_type => :vulnerable, :duration => vulnerable_amount))
-                    if !is_aoe(piece)
-                        break
-                    end
-                end
-            end
+        # AOE (Mace) writes a stack on every living enemy. Single-target stays on the selected one.
+        status_targets = if is_aoe(piece)
+            [e.scripts[1] for e in battle_manager.enemies if e.scripts[1].health > 0]
+        elseif status_target !== nothing
+            [status_target]
+        else
+            []
+        end
+        for enemy_script in status_targets
+            enemy_script.vulnerable = clamp(enemy_script.vulnerable + vulnerable_amount, 0, 5)
+        end
+        for enemy in battle_manager.enemies
+            enemy.scripts[1] in status_targets || continue
+            Globals.ObserverModule.notify(:status_applied, Dict(:target => enemy, :status_type => :vulnerable, :duration => vulnerable_amount))
         end
     end
     if piece.poison > 0
@@ -619,10 +621,10 @@ function effective_attack_damage_after_debuffs(user, attack_value::Int)::Int
     return max(0, damage - max(user.poison, 0))
 end
 
-"""Matches Combatant.take_damage: any vulnerable stacks multiply incoming damage by 1.5."""
+"""Matches Combatant.take_damage: each vulnerable stack adds 1 flat damage."""
 function damage_after_vulnerable(damage::Int, vulnerable_stacks::Int)::Int
     vulnerable_stacks <= 0 && return damage
-    return floor(Int, damage * 1.5)
+    return damage + vulnerable_stacks
 end
 
 function deal_damage(battle_manager, damage::Int, is_critical::Bool=false)

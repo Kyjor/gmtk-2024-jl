@@ -5,10 +5,40 @@ using JulGame
 # key: enemy key, value: number of encounters this run
 const SEEN_ENEMIES = Dict{String, Int}()
 const SHOP_VISITS = Dict{String, Int}()
+# Enemy key → the shared struct from before this session scaled it.
+const ENEMY_ORIGINALS = Dict{String, Any}()
+
+function _enemies_dict()
+    return JulGame.UserGlobals["Module"].EnemiesModule.ALL_ENEMIES
+end
+
+function remember_enemy_original!(enemies_dict, enemy_key::String)
+    haskey(ENEMY_ORIGINALS, enemy_key) && return
+    haskey(enemies_dict, enemy_key) || return
+    ENEMY_ORIGINALS[enemy_key] = enemies_dict[enemy_key]
+end
+
+# Keys already counted this battle, so two of the same enemy only count once.
+const DEFEATED_THIS_BATTLE = Set{String}()
 
 function reset!()
+    try
+        enemies_dict = _enemies_dict()
+        for (key, original) in ENEMY_ORIGINALS
+            haskey(enemies_dict, key) || continue
+            enemies_dict[key] = original
+        end
+    catch e
+        @warn "Failed to restore enemy originals: $e"
+    end
+    empty!(ENEMY_ORIGINALS)
     empty!(SEEN_ENEMIES)
     empty!(SHOP_VISITS)
+    empty!(DEFEATED_THIS_BATTLE)
+end
+
+function begin_encounter!()
+    empty!(DEFEATED_THIS_BATTLE)
 end
 
 const EnemyScaling = Dict{String, Vector{Tuple{Float64, String, Float64}}}(
@@ -31,6 +61,7 @@ function register_enemy_seen(enemy_key::String)
     SEEN_ENEMIES[enemy_key] = get(SEEN_ENEMIES, enemy_key, 0) + 1
     seen = SEEN_ENEMIES[enemy_key]
     if seen >= 2 && seen <= 3
+        remember_enemy_original!(enemies_dict, enemy_key)
         scaling = get(EnemyScaling, enemy_key, DefaultEnemyScaling)[seen-1]
         update_shared_structure(enemies_dict, enemy_key, :average_health, round(Int, enemies_dict[enemy_key].average_health * scaling[1]))
         update_shared_structure(enemies_dict, enemy_key, :pattern, enemies_dict[enemy_key].pattern * ",$(scaling[2])")
@@ -50,14 +81,17 @@ function update_shared_structure(dict::Dict, key::String, value_symbol::Symbol, 
     end
 end
 
+"""Count this enemy type once this battle, only after one of them is defeated."""
+function register_enemy_defeated!(enemy_key::String)
+    key = string(enemy_key)
+    (isempty(key) || key in DEFEATED_THIS_BATTLE) && return
+    push!(DEFEATED_THIS_BATTLE, key)
+    register_enemy_seen(key)
+end
+
+# Kept so older call sites and precompile still resolve. Sightings are not counted here.
 function register_encounter_enemies!(enemy_keys)
-    seen_this = Set{String}()
-    for raw in enemy_keys
-        key = string(raw)
-        (isempty(key) || key in seen_this) && continue
-        push!(seen_this, key)
-        register_enemy_seen(key)
-    end
+    begin_encounter!()
 end
 
 function register_shop_visit()

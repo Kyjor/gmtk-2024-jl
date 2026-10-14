@@ -118,10 +118,11 @@ module PersistentStateManagerModule
         # Clear player data (shop flags, etc.)
         this.playerData = Dict{String, Any}()
 
-        # try
-        #     parentmodule(parentmodule(@__MODULE__)).RunScalingModule.reset!()
-        # catch 
-        # end
+        try
+            parentmodule(parentmodule(@__MODULE__)).RunScalingModule.reset!()
+        catch e
+            @warn "Failed to reset run scaling: $e"
+        end
         
         # Reset run timer
         this.runElapsedTime = 0.0

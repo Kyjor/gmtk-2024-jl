@@ -40,7 +40,7 @@ const UI_STRINGS = Dict(
     
     # Character selection
     :character_select_title => "Select Character:",
-    :character_locked => "Locked...",
+    :character_locked => "Unlocked in the full game",
     :character_stats => "HP {hp}   ATK {atk}   DEF {def}",
     :character_starting_pieces => "Starting pieces:",
     :character_activate_label => "Active:",

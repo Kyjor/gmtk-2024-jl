@@ -259,16 +259,65 @@ module OverworldFeedbackModule
         sfx && _sfx("piecesword")
     end
 
+    # Same pulse and enter-wobble as a selected board piece.
+    const SALE_HOVER = WeakKeyDict{Any, Tuple{Any, Float64}}()
+    const SALE_PULSE_AMOUNT = 0.07
+    const SALE_PULSE_SPEED = 5.5
+    const SALE_WOBBLE_AMOUNT = 0.03
+    const SALE_WOBBLE_DURATION = 0.25
+
+    function _sale_scale!(entity, s::Float64)
+        entity === nothing && return
+        try
+            entity.sprite.renderScale = JulGame.Math.Vector2f(s, s)
+        catch
+        end
+    end
+
+    function update_sale_hover!(owner, entity, deltaTime)
+        prev_entity, pulse = get(SALE_HOVER, owner, (nothing, 0.0))
+        if prev_entity !== entity
+            if prev_entity !== nothing
+                try
+                    parentmodule(OverworldFeedbackModule).BattleManagerModule.BattleJuiceModule.cancel_shake!(prev_entity)
+                catch
+                end
+                _sale_scale!(prev_entity, 1.0)
+            end
+            pulse = 0.0
+            if entity !== nothing
+                try
+                    parentmodule(OverworldFeedbackModule).BattleManagerModule.BattleJuiceModule.shake!(
+                        entity;
+                        intensity = SALE_WOBBLE_AMOUNT,
+                        duration = SALE_WOBBLE_DURATION,
+                        wobble = true,
+                    )
+                catch
+                end
+            end
+        end
+        if entity !== nothing
+            pulse += Float64(deltaTime)
+            _sale_scale!(entity, 1.0 + SALE_PULSE_AMOUNT * sin(pulse * SALE_PULSE_SPEED))
+        end
+        SALE_HOVER[owner] = (entity, pulse)
+    end
+
     function update(deltaTime)
         _update_hit!(deltaTime)
         ActionResultDisplayModule.update(deltaTime)
     end
 
     function reset!()
+        for (_, pair) in SALE_HOVER
+            _sale_scale!(pair[1], 1.0)
+        end
+        empty!(SALE_HOVER)
         _finish_hit!()
         PLAYER_REF[] = nothing
         ActionResultDisplayModule.reset!()
     end
 
-    export gold!, heal!, damage!, potion!, attack!, defense!, max_hp!, luck!, treasure!, piece!, update, reset!, set_player!
+    export gold!, heal!, damage!, potion!, attack!, defense!, max_hp!, luck!, treasure!, piece!, update, reset!, set_player!, update_sale_hover!
 end

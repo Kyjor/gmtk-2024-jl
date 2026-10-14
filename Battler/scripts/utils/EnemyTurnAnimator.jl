@@ -811,7 +811,7 @@ function effective_incoming_attack_damage(bm, enemy_data)::Int
     end
     try
         if Int(bm.user.vulnerable) > 0
-            attack_damage = floor(Int64, attack_damage * 1.5)
+            attack_damage += Int(bm.user.vulnerable)
         end
     catch
     end
@@ -829,8 +829,14 @@ function resolve_player_defense(bm, enemy_data)::Symbol
     player_entity = JulGame.SceneModule.get_entity_by_id(MAIN.scene, "95b3f5d9-a580-4a15-b745-9ecf1fc76620")
     incoming = effective_incoming_attack_damage(bm, enemy_data)
 
-    # Dodge first — spend the roll even if shield would have fully blocked.
-    dodge_chance = incoming > 0 ? globals.PiecesModule.player_dodge_chance(bm.user) : 0
+    # A full block stops the hit, so leave Dodge charged for an attack that would actually hurt.
+    if attack_fully_blocked_by_shield(bm, incoming)
+        TURN_STATE.attack_was_blocked = true
+        Scripts.PlayerFocusZoomModule.release_focus!()
+        return :blocked
+    end
+
+    dodge_chance = globals.PiecesModule.player_dodge_chance(bm.user)
     if dodge_chance > 0
         has_shadow_cloak = globals.UserModule.has_treasure(globals.TreasuresModule.TREASURE_SHADOWCLOAK)
 
@@ -887,12 +893,6 @@ function resolve_player_defense(bm, enemy_data)::Symbol
             end
         end
         bm.user.dodge_chance = 0
-    end
-
-    if attack_fully_blocked_by_shield(bm, incoming)
-        TURN_STATE.attack_was_blocked = true
-        Scripts.PlayerFocusZoomModule.release_focus!()
-        return :blocked
     end
 
     reflect_chance = globals.PiecesModule.player_reflect_chance(bm.user)

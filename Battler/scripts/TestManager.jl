@@ -421,7 +421,7 @@ module TestManagerModule
             return 10.0
         elseif label == "HEAL" || occursin("SHIELD", label)
             return 3.0
-        elseif label in ("BURN", "POISON", "FREEZE", "VULN", "SHOCK")
+        elseif label in ("BURN", "POISON", "FREEZE", "VULN", "VULN (ALL)", "SHOCK")
             return 1.0
         elseif label == "DOLLARS"
             return 0.5

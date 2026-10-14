@@ -439,9 +439,9 @@ function JulGame.initialize(this::BattleManager)
         end
         enemy_comp = join(enemy_keys, ",")
         try
-            Scripts.RunScalingModule.register_encounter_enemies!(enemy_keys)
+            Scripts.RunScalingModule.begin_encounter!()
         catch e
-            @error "Error registering encounter enemies: $(e)"
+            @error "Error starting encounter scaling: $(e)"
         end
         try
             globals.RunRecorderModule.battle_start!(enemy_keys)
@@ -932,7 +932,7 @@ function _player_health_damage(user, damage::Int)::Int
     dmg = damage
     try
         if user.vulnerable > 0
-            dmg = floor(Int, dmg * 1.5)
+            dmg += Int(user.vulnerable)
         end
         if user.shield > 0
             dmg = max(0, dmg - Int(user.shield))
@@ -1266,9 +1266,14 @@ function on_notify(this, event::Symbol, data::Any)
         end
     elseif event == :enemy_defeated
         # Death animation is handled in Enemy.jl; no duplicate defeat feedback here.
+        defeated_enemy = data
+        try
+            Scripts.RunScalingModule.register_enemy_defeated!(string(defeated_enemy.enemyKey))
+        catch e
+            @debug "enemy seen on defeat: $e"
+        end
 
         # Elemental Focus: Transfer status effects from defeated enemy to random remaining enemy
-        defeated_enemy = data
         if defeated_enemy !== nothing && Globals.UserModule.has_treasure(Globals.TreasuresModule.TREASURE_ELEMENTALFOCUS)
             # Find all remaining alive enemies
             alive_enemies = []

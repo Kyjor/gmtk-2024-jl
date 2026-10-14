@@ -199,10 +199,9 @@ function add_inventory(script, item)
 end
 
 function take_damage(script, damage::Int64)
-    # Apply vulnerable effect if present (increases damage taken)
+    # Each vulnerable stack adds 1 damage, including hits of 1.
     if script.vulnerable > 0
-        # Vulnerable increases damage by 50%
-        damage = floor(Int64, damage * 1.5)
+        damage += script.vulnerable
     end
 
     if script.shield > 0

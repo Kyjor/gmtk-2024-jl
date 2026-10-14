@@ -210,6 +210,12 @@ module ComboTrackerModule
         )
         push!(this.match_history, match_data)
         
+        # A single match is tracked, but it is not a combo until the second match.
+        if this.combo_length < 2
+            @debug "Match recorded, waiting for a second to start the combo"
+            return
+        end
+
         # Update combo speed (exponential scaling)
         update_combo_speed(this)
         
@@ -217,7 +223,7 @@ module ComboTrackerModule
         combo_state = create_combo_state_snapshot(this)
         
         # Emit appropriate event through Observer pattern
-        if this.combo_length == 1
+        if this.combo_length == 2
             emit_combo_started(combo_state)
             @debug "Combo started"
         else
@@ -364,6 +370,12 @@ module ComboTrackerModule
             end
         end
         
+        # One match never became a combo, so skip the ended event, sound, and nunchucks.
+        if combo_state.combo_length < 2
+            clear_combo_counters!(this)
+            return
+        end
+
         # Track combo length in analytics
         try
             Globals.AnalyticsModule.track_action(:combo_length, combo_state.combo_length)

@@ -9,7 +9,7 @@ module KeywordGlossaryModule
         "burn" => ("Burn", "Lose 1 HP at the end of the turn. Each stack lasts one turn."),
         "freeze" => ("Freeze", "Enemies skip their turn. On you, you lose a move."),
         "poison" => ("Poison", "Attacks deal less damage, reduced by the number of stacks."),
-        "vulnerable" => ("Vulnerable", "Attacks against this combatant deal 50% more damage."),
+        "vulnerable" => ("Vulnerable", "Attacks against this combatant deal 1 extra damage per stack."),
         "shock" => ("Shock", "At the end of the turn, deal damage equal to the stacks to other enemies."),
         "status" => ("Status", "A temporary combat effect, such as Burn, Freeze, Poison, Vulnerable, or Shock."),
     )

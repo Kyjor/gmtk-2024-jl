@@ -8,7 +8,7 @@ const STATUS_MAPPINGS = Dict(
     "burn"       => (c) -> (val = c.burn,                              buff = false, tooltip = "Burn: Lose HP each turn"),
     "freeze"     => (c) -> (val = c.freeze,                            buff = false, tooltip = "Freeze: Enemies skip their turn; on you, lose a move"),
     "poison"     => (c) -> (val = c.poison,                            buff = false, tooltip = "Poison: Attacks deal 1 less damage per stack"),
-    "vulnerable" => (c) -> (val = c.vulnerable,                        buff = false, tooltip = "Vulnerable: Take increased damage"),
+    "vulnerable" => (c) -> (val = c.vulnerable,                        buff = false, tooltip = "Vulnerable: Take 1 extra damage per stack"),
     "weaken"     => (c) -> (val = c.weaken,                            buff = false, tooltip = "Weaken: Deal less damage with attacks"),
     "shock"      => (c) -> (val = c.shock,                             buff = false, tooltip = "Shock: Deal damage to other enemies each turn"),
     "dodge"      => (c) -> (val = Float64(shown_dodge_chance(c))/100.0, buff = true,  tooltip = "Dodge: Chance to avoid attacks"),

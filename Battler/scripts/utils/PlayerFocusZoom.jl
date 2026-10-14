@@ -40,7 +40,7 @@ module PlayerFocusZoomModule
         dmg <= 0 && return false
         try
             if user.vulnerable > 0
-                dmg = floor(Int, dmg * 1.5)
+                dmg += Int(user.vulnerable)
             end
         catch
         end

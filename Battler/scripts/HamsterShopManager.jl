@@ -392,6 +392,7 @@ module HamsterShopManagerModule
             outline_entity(this, this.hoveredEntity)
             handle_outline_fade(this)
         end
+        OverworldFeedbackModule.update_sale_hover!(this, this.hoveredEntity, deltaTime)
         # Update message timeout
         if this.messageTimeout > 0
             this.messageTimeout -= deltaTime

@@ -2021,8 +2021,16 @@ module GridControllerModule
 		end
 		if aoe
 			alive = [e.scripts[1] for e in bm.enemies if e.scripts[1].health > 0]
-			if !isempty(alive) && all(es -> es.vulnerable > 0, alive)
-				return PM.damage_after_vulnerable(damage, 1), "DMG (all, vuln)"
+			if isempty(alive)
+				return damage, "DMG (all)"
+			end
+			rep = PM.live_enemy_target(bm)
+			if rep === nothing || rep.health <= 0
+				rep = alive[1]
+			end
+			stacks = Int(rep.vulnerable)
+			if stacks > 0
+				return PM.damage_after_vulnerable(damage, stacks), "DMG (all, vuln)"
 			end
 			return damage, "DMG (all)"
 		end
@@ -2100,7 +2108,7 @@ module GridControllerModule
 		end
 		vuln_val = piece.vulnerable * action_count
 		if vuln_val > 0
-			push!(out, (value = Int64(vuln_val), value_label = "VULN"))
+			push!(out, (value = Int64(vuln_val), value_label = PM.is_aoe(piece) ? "VULN (all)" : "VULN"))
 		end
 		poison_val = piece.poison * action_count
 		if poison_val > 0
